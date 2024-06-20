@@ -1,15 +1,24 @@
 FROM ubuntu:latest AS build
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
+# Lazımi paketləri quraşdırın
+RUN apt-get update && \
+    apt-get install -y openjdk-17-jdk maven
+
+# İş qovluğunu təyin edin
+WORKDIR /app
+
+# Layihə fayllarını köçürün
 COPY . .
 
-RUN ./gradlew bootJar --no-daemon
+# Maven ilə build edin
+RUN mvn clean package
 
+# --- Mərhələ 2: Run ---
 FROM openjdk:17-jdk-slim
 
+# Portu açın
 EXPOSE 8080
 
-COPY --from=build /build/libs/demo-1.jar app.jar
-
+# İcranı yerinə yetirin
+COPY --from=build /app/target/demo-1.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
